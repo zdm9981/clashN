@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout clashN
+        uses: actions/checkout@v4
+        with:
+          path: clashN
+
+      - name: Checkout v2rayN for PacLib
+        uses: actions/checkout@v4
+        with:
+          repository: 2dust/v2rayN
+          ref: master
+          path: v2rayN
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        working-directory: clashN
+        run: dotnet restore clashN/clashN.sln
+
+      - name: Publish ClashN
+        working-directory: clashN
+        run: dotnet publish clashN/clashN/clashN.csproj -c Release -r win-x64 --self-contained false -o artifacts/ClashN
+
+      - name: Publish ClashUpgrade
+        working-directory: clashN
+        run: dotnet publish clashN/clashUpgrade/clashUpgrade.csproj -c Release -r win-x64 --self-contained false -o artifacts/ClashN
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClashN-win-x64
+          path: clashN/artifacts/ClashN

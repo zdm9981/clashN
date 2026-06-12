@@ -78,7 +78,11 @@ namespace ClashN.Base
             var byteContent = new ByteArrayContent(buffer);
             byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            await httpClient.PutAsync(url, byteContent);
+            using var response = await httpClient.PutAsync(url, byteContent);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(string.Format("The request returned with HTTP status code {0}", response.StatusCode));
+            }
         }
 
         public async Task PatchAsync(string url, Dictionary<string, string> headers)
@@ -88,7 +92,11 @@ namespace ClashN.Base
             var byteContent = new ByteArrayContent(buffer);
             byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            await httpClient.PatchAsync(url, byteContent);
+            using var response = await httpClient.PatchAsync(url, byteContent);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(string.Format("The request returned with HTTP status code {0}", response.StatusCode));
+            }
         }
 
         public async Task DeleteAsync(string url)
@@ -98,7 +106,11 @@ namespace ClashN.Base
             //var byteContent = new ByteArrayContent(buffer);
             //byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            await httpClient.DeleteAsync(url);
+            using var response = await httpClient.DeleteAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(string.Format("The request returned with HTTP status code {0}", response.StatusCode));
+            }
         }
 
         public async Task DownloadFileAsync(HttpClient client, string url, string fileName, IProgress<double> progress, CancellationToken token)

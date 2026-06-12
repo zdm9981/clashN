@@ -60,7 +60,10 @@ namespace ClashN.Handler
 
                     if (_process != null && !_process.HasExited && !blChanged)
                     {
-                        MainFormHandler.Instance.ClashConfigReload(fileName);
+                        if (!MainFormHandler.Instance.ClashConfigReload(fileName).GetAwaiter().GetResult())
+                        {
+                            CoreRestart(item);
+                        }
                     }
                     else
                     {
@@ -200,21 +203,26 @@ namespace ClashN.Handler
                     arguments += $" -d \"{data}\"";
                 }
 
-                Process p = new Process
+                var startInfo = new ProcessStartInfo
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = fileName,
-                        Arguments = arguments,
-                        WorkingDirectory = Utils.GetConfigPath(),
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true,
-                        StandardOutputEncoding = Encoding.UTF8,
-                        StandardErrorEncoding = Encoding.UTF8
-                    }
+                    FileName = fileName,
+                    Arguments = arguments,
+                    WorkingDirectory = Utils.GetConfigPath(),
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8
                 };
+
+                if (coreInfo.safePaths != null && coreInfo.safePaths.Count > 0)
+                {
+                    var safePaths = coreInfo.safePaths.Select(Utils.GetPath);
+                    startInfo.EnvironmentVariables["SAFE_PATHS"] = string.Join(Path.PathSeparator, safePaths);
+                }
+
+                Process p = new Process() { StartInfo = startInfo };
                 //if (config.enableTun)
                 //{
                 //    p.StartInfo.Verb = "runas";

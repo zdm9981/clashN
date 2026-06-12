@@ -18,5 +18,7 @@
         public string coreDownloadUrl64 { get; set; }
 
         public string match { get; set; }
+
+        public List<string> safePaths { get; set; }
     }
 }

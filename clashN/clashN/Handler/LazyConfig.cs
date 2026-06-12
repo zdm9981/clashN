@@ -99,6 +99,7 @@ namespace ClashN.Handler
                 coreLatestUrl = Global.mihomoCoreUrl + "/latest",
                 coreDownloadUrl32 = Global.mihomoCoreUrl + "/download/{0}/mihomo-windows-386-{0}.zip",
                 coreDownloadUrl64 = Global.mihomoCoreUrl + "/download/{0}/mihomo-windows-amd64" + (Avx2.X64.IsSupported ? "" : "-compatible") + "-{0}.zip",
+                safePaths = new List<string> { "guiConfigs", "data" },
                 match = "Mihomo"
             });
 

@@ -204,7 +204,7 @@ namespace ClashN.ViewModels
             {
                 _connectionItems.Clear();
             }
-            MainFormHandler.Instance.ClashConnectionClose(id);
+            _ = MainFormHandler.Instance.ClashConnectionClose(id);
             GetClashConnections();
         }
     }

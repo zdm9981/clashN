@@ -339,31 +339,41 @@ namespace ClashN.Handler
         {
             Task.Run(async () =>
             {
-                var proxies = LazyConfig.Instance.GetProxies();
-                if (proxies == null)
+                try
                 {
-                    return;
+                    var proxies = LazyConfig.Instance.GetProxies();
+                    if (proxies == null)
+                    {
+                        return;
+                    }
+
+                    var urlBase = $"{GetApiUrl()}/configs";
+
+                    await HttpClientHelper.GetInstance().PatchAsync(urlBase, headers);
                 }
-
-                var urlBase = $"{GetApiUrl()}/configs";
-
-                await HttpClientHelper.GetInstance().PatchAsync(urlBase, headers);
+                catch (Exception ex)
+                {
+                    Utils.SaveLog(ex.Message, ex);
+                }
             });
         }
 
-        public async void ClashConfigReload(string filePath)
+        public async Task<bool> ClashConfigReload(string filePath)
         {
-            ClashConnectionClose("");
+            await ClashConnectionClose("");
             try
             {
                 var url = $"{GetApiUrl()}/configs?force=true";
                 Dictionary<string, string> headers = new Dictionary<string, string>();
                 headers.Add("path", filePath);
                 await HttpClientHelper.GetInstance().PutAsync(url, headers);
+                await ClashConnectionClose("");
+                return true;
             }
             catch (Exception ex)
             {
                 Utils.SaveLog(ex.Message, ex);
+                return false;
             }
         }
 
@@ -388,16 +398,20 @@ namespace ClashN.Handler
             }
         }
 
-        public async void ClashConnectionClose(string id)
+        public async Task<bool> ClashConnectionClose(string id)
         {
             try
             {
-                var url = $"{GetApiUrl()}/connections/{id}";
+                var url = string.IsNullOrEmpty(id)
+                    ? $"{GetApiUrl()}/connections"
+                    : $"{GetApiUrl()}/connections/{id}";
                 await HttpClientHelper.GetInstance().DeleteAsync(url);
+                return true;
             }
             catch (Exception ex)
             {
                 Utils.SaveLog(ex.Message, ex);
+                return false;
             }
         }
 
