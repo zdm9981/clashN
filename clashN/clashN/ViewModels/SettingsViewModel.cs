@@ -76,6 +76,9 @@ namespace ClashN.ViewModels
         [Reactive]
         public bool AutoHideStartup { get; set; }
 
+        [Reactive]
+        public bool EnableLatestClashVergeUserAgent { get; set; }
+
         public ReactiveCommand<Unit, Unit> SetLoopbackCmd { get; }
         public ReactiveCommand<Unit, Unit> SetGlobalHotkeyCmd { get; }
 
@@ -142,6 +145,7 @@ namespace ClashN.ViewModels
             SubConvertUrl = _config.ConstItem.subConvertUrl;
             currentFontFamily = _config.UiItem.currentFontFamily;
             AutoHideStartup = _config.AutoHideStartup;
+            EnableLatestClashVergeUserAgent = _config.EnableLatestClashVergeUserAgent;
 
             SetLoopbackCmd = ReactiveCommand.Create(() =>
             {
@@ -277,6 +281,7 @@ namespace ClashN.ViewModels
             _config.ConstItem.subConvertUrl = SubConvertUrl;
             _config.UiItem.currentFontFamily = currentFontFamily;
             _config.AutoHideStartup = AutoHideStartup;
+            _config.EnableLatestClashVergeUserAgent = EnableLatestClashVergeUserAgent;
 
             //System proxy
             _config.SystemProxyExceptions = systemProxyExceptions;

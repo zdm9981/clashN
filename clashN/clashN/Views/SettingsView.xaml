@@ -241,6 +241,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -317,14 +318,13 @@
                             Margin="8"
                             VerticalAlignment="Center"
                             Style="{StaticResource ListItemTitle}"
-                            Text="{x:Static resx:ResUI.TbSettingsAutoUpdate}" />
-                        <TextBox
-                            x:Name="txtautoUpdateSubInterval"
+                            Text="{x:Static resx:ResUI.TbSettingsLatestClashVergeUserAgent}" />
+                        <ToggleButton
+                            x:Name="togEnableLatestClashVergeUserAgent"
                             Grid.Row="7"
                             Grid.Column="1"
-                            Width="300"
                             Margin="8"
-                            Style="{StaticResource DefTextBox}" />
+                            HorizontalAlignment="Left" />
 
                         <TextBlock
                             Grid.Row="8"
@@ -332,16 +332,31 @@
                             Margin="8"
                             VerticalAlignment="Center"
                             Style="{StaticResource ListItemTitle}"
-                            Text="{x:Static resx:ResUI.TbSettingsAutoTest}" />
+                            Text="{x:Static resx:ResUI.TbSettingsAutoUpdate}" />
                         <TextBox
-                            x:Name="txtautoDelayTestInterval"
+                            x:Name="txtautoUpdateSubInterval"
                             Grid.Row="8"
                             Grid.Column="1"
                             Width="300"
                             Margin="8"
                             Style="{StaticResource DefTextBox}" />
+
                         <TextBlock
                             Grid.Row="9"
+                            Grid.Column="0"
+                            Margin="8"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource ListItemTitle}"
+                            Text="{x:Static resx:ResUI.TbSettingsAutoTest}" />
+                        <TextBox
+                            x:Name="txtautoDelayTestInterval"
+                            Grid.Row="9"
+                            Grid.Column="1"
+                            Width="300"
+                            Margin="8"
+                            Style="{StaticResource DefTextBox}" />
+                        <TextBlock
+                            Grid.Row="10"
                             Grid.Column="0"
                             Margin="8"
                             VerticalAlignment="Center"
@@ -349,7 +364,7 @@
                             Text="{x:Static resx:ResUI.TbSettingsSubConvert}" />
                         <ComboBox
                             x:Name="cmbSubConvertUrl"
-                            Grid.Row="9"
+                            Grid.Row="10"
                             Grid.Column="1"
                             Width="300"
                             Margin="8"
@@ -358,7 +373,7 @@
                             Style="{StaticResource DefComboBox}" />
 
                         <TextBlock
-                            Grid.Row="10"
+                            Grid.Row="11"
                             Grid.Column="0"
                             Margin="8"
                             VerticalAlignment="Center"
@@ -366,13 +381,13 @@
                             Text="{x:Static resx:ResUI.TbSettingsFontFamily}" />
                         <ComboBox
                             x:Name="cmbcurrentFontFamily"
-                            Grid.Row="10"
+                            Grid.Row="11"
                             Grid.Column="1"
                             Width="300"
                             Margin="8"
                             Style="{StaticResource DefComboBox}" />
                         <TextBlock
-                            Grid.Row="10"
+                            Grid.Row="11"
                             Grid.Column="2"
                             Margin="8"
                             VerticalAlignment="Center"
@@ -381,14 +396,14 @@
 
                         <Button
                             x:Name="btnSetLoopback"
-                            Grid.Row="11"
+                            Grid.Row="12"
                             Grid.Column="0"
                             Margin="8"
                             Content="{x:Static resx:ResUI.TbSettingsSetUWP}"
                             Style="{StaticResource DefButton}" />
                         <Button
                             x:Name="btnSetGlobalHotkey"
-                            Grid.Row="12"
+                            Grid.Row="13"
                             Grid.Column="0"
                             Margin="8"
                             Content="{x:Static resx:ResUI.TbGlobalHotkeySetting}"

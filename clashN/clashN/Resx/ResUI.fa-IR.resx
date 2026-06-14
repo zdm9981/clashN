@@ -649,6 +649,9 @@
   <data name="TbSettingsAutoHideStartup" xml:space="preserve">
     <value>Auto hide startup</value>
   </data>
+  <data name="TbSettingsLatestClashVergeUserAgent" xml:space="preserve">
+    <value>Use latest Clash Verge Rev User-Agent</value>
+  </data>
   <data name="TbSystemProxyPac" xml:space="preserve">
     <value>Pac Mode</value>
   </data>

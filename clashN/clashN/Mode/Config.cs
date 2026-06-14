@@ -48,6 +48,8 @@ namespace ClashN.Mode
 
         public bool AutoHideStartup { get; set; }
 
+        public bool EnableLatestClashVergeUserAgent { get; set; } = true;
+
         public bool EnableTun { get; set; }
 
         #endregion property

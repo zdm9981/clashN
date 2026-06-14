@@ -107,6 +107,7 @@ namespace ClashN.Views
                 this.Bind(ViewModel, vm => vm.EnableStatistics, v => v.togEnableStatistics.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.EnableSecurityProtocolTls13, v => v.togEnableSecurityProtocolTls13.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.AutoHideStartup, v => v.togAutoHideStartup.IsChecked).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.EnableLatestClashVergeUserAgent, v => v.togEnableLatestClashVergeUserAgent.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.autoUpdateSubInterval, v => v.txtautoUpdateSubInterval.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.autoDelayTestInterval, v => v.txtautoDelayTestInterval.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SubConvertUrl, v => v.cmbSubConvertUrl.Text).DisposeWith(disposables);

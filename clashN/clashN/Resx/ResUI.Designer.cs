@@ -1313,6 +1313,15 @@ namespace ClashN.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Use latest Clash Verge Rev User-Agent 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsLatestClashVergeUserAgent {
+            get {
+                return ResourceManager.GetString("TbSettingsLatestClashVergeUserAgent", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Automatic latency test interval (minutes) 的本地化字符串。
         /// </summary>
         public static string TbSettingsAutoTest {

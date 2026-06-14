@@ -13,6 +13,12 @@ namespace ClashN.Handler
     /// </summary>
     internal class DownloadHandle
     {
+        private const string DefaultClashVergeUserAgent = "clash-verge/v2.5.2";
+        private const string ClashVergeLatestReleaseApi = "https://api.github.com/repos/clash-verge-rev/clash-verge-rev/releases/latest";
+        private static readonly SemaphoreSlim UserAgentLock = new SemaphoreSlim(1, 1);
+        private static string? latestClashVergeUserAgent;
+        private static DateTime latestClashVergeUserAgentTime;
+
         public event EventHandler<ResultEventArgs>? UpdateCompleted;
 
         public event ErrorEventHandler? Error;
@@ -84,7 +90,7 @@ namespace ClashN.Handler
 
                 if (string.IsNullOrEmpty(userAgent))
                 {
-                    userAgent = $"{Utils.GetVersion(false)}";
+                    userAgent = await GetDefaultUserAgentAsync(blProxy);
                 }
                 client.DefaultRequestHeaders.UserAgent.TryParseAdd(userAgent);
 
@@ -149,6 +155,78 @@ namespace ClashN.Handler
             }
 
             return new WebProxy($"socks5://{Global.Loopback}:{socksPort}");
+        }
+
+        private async Task<string> GetDefaultUserAgentAsync(bool blProxy)
+        {
+            if (!LazyConfig.Instance.Config.EnableLatestClashVergeUserAgent)
+            {
+                return DefaultClashVergeUserAgent;
+            }
+
+            if (!string.IsNullOrEmpty(latestClashVergeUserAgent)
+                && DateTime.Now - latestClashVergeUserAgentTime < TimeSpan.FromHours(6))
+            {
+                return latestClashVergeUserAgent;
+            }
+
+            await UserAgentLock.WaitAsync();
+            try
+            {
+                if (!string.IsNullOrEmpty(latestClashVergeUserAgent)
+                    && DateTime.Now - latestClashVergeUserAgentTime < TimeSpan.FromHours(6))
+                {
+                    return latestClashVergeUserAgent;
+                }
+
+                var webProxy = GetWebProxy(blProxy);
+                using var client = new HttpClient(new SocketsHttpHandler()
+                {
+                    Proxy = webProxy,
+                    UseProxy = webProxy != null
+                });
+                client.Timeout = TimeSpan.FromSeconds(10);
+                client.DefaultRequestHeaders.UserAgent.TryParseAdd(DefaultClashVergeUserAgent);
+
+                using var response = await client.GetAsync(ClashVergeLatestReleaseApi);
+                if (!response.IsSuccessStatusCode)
+                {
+                    latestClashVergeUserAgent = DefaultClashVergeUserAgent;
+                    latestClashVergeUserAgentTime = DateTime.Now;
+                    return DefaultClashVergeUserAgent;
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var release = Utils.FromJson<Dictionary<string, object>>(json);
+                var tagName = release != null && release.TryGetValue("tag_name", out var tag)
+                    ? tag?.ToString()
+                    : null;
+
+                if (string.IsNullOrEmpty(tagName))
+                {
+                    latestClashVergeUserAgent = DefaultClashVergeUserAgent;
+                    latestClashVergeUserAgentTime = DateTime.Now;
+                    return DefaultClashVergeUserAgent;
+                }
+
+                latestClashVergeUserAgent = tagName.StartsWith("v", StringComparison.OrdinalIgnoreCase)
+                    ? $"clash-verge/{tagName}"
+                    : $"clash-verge/v{tagName}";
+                latestClashVergeUserAgentTime = DateTime.Now;
+
+                return latestClashVergeUserAgent;
+            }
+            catch (Exception ex)
+            {
+                Utils.SaveLog("GetDefaultUserAgentAsync", ex);
+                latestClashVergeUserAgent = DefaultClashVergeUserAgent;
+                latestClashVergeUserAgentTime = DateTime.Now;
+                return DefaultClashVergeUserAgent;
+            }
+            finally
+            {
+                UserAgentLock.Release();
+            }
         }
 
         private bool SocketCheck(string ip, int port)

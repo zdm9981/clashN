@@ -652,6 +652,9 @@
   <data name="TbSettingsAutoHideStartup" xml:space="preserve">
     <value>启动后隐藏窗口</value>
   </data>
+  <data name="TbSettingsLatestClashVergeUserAgent" xml:space="preserve">
+    <value>使用 Clash Verge Rev 最新 User-Agent</value>
+  </data>
   <data name="TbSystemProxyPac" xml:space="preserve">
     <value>Pac模式</value>
   </data>
