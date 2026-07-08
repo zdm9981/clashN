@@ -1,11 +1,11 @@
 ﻿using ClashN.Base;
 using ClashN.Resx;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
-using System.Text.RegularExpressions;
 
 namespace ClashN.Handler
 {
@@ -105,25 +105,20 @@ namespace ClashN.Handler
                 var cts = new CancellationTokenSource();
                 cts.CancelAfter(1000 * 30);
 
-                var logUrl = SanitizeUrlForLog(url);
-                Utils.SaveLog($"DownloadString Request url={logUrl}; proxy={blProxy}; proxyAvailable={webProxy != null}; userAgent=\"{userAgent}\"");
-
-                var response = await client.GetAsync(url, cts.Token);
-                var responseContent = await response.Content.ReadAsStringAsync();
-                Utils.SaveLog(
-                    $"DownloadString Response url={logUrl}; status={(int)response.StatusCode} {response.StatusCode}; " +
-                    $"contentType=\"{response.Content.Headers.ContentType}\"; length={responseContent?.Length ?? 0}; " +
-                    $"preview=\"{GetContentPreviewForLog(responseContent)}\"");
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception(string.Format("The request returned with HTTP status code {0}", response.StatusCode));
-                }
-
-                return (responseContent, response.Headers);
+                var result = await HttpClientHelper.GetInstance().GetAsync(client, url, cts.Token);
+                return result;
             }
             catch (Exception ex)
             {
+                if (!blProxy)
+                {
+                    var curlResult = await DownloadStringWithCurlAsync(url, userAgent);
+                    if (!string.IsNullOrEmpty(curlResult))
+                    {
+                        return (curlResult, null);
+                    }
+                }
+
                 Utils.SaveLog(ex.Message, ex);
                 Error?.Invoke(this, new ErrorEventArgs(ex));
                 if (ex.InnerException != null)
@@ -135,41 +130,69 @@ namespace ClashN.Handler
             return null;
         }
 
-        private static string SanitizeUrlForLog(string url)
+        private async Task<string?> DownloadStringWithCurlAsync(string url, string userAgent)
         {
             try
             {
-                var uri = new Uri(url);
-                return uri.GetLeftPart(UriPartial.Path);
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "curl.exe",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+
+                startInfo.ArgumentList.Add("-L");
+                startInfo.ArgumentList.Add("--noproxy");
+                startInfo.ArgumentList.Add("*");
+                startInfo.ArgumentList.Add("--proxy");
+                startInfo.ArgumentList.Add(string.Empty);
+                startInfo.ArgumentList.Add("-A");
+                startInfo.ArgumentList.Add(userAgent);
+                startInfo.ArgumentList.Add("-H");
+                startInfo.ArgumentList.Add("Accept: */*");
+                startInfo.ArgumentList.Add("-H");
+                startInfo.ArgumentList.Add("Cache-Control: no-cache");
+                startInfo.ArgumentList.Add("-H");
+                startInfo.ArgumentList.Add("Pragma: no-cache");
+                startInfo.ArgumentList.Add("--connect-timeout");
+                startInfo.ArgumentList.Add("15");
+                startInfo.ArgumentList.Add("--max-time");
+                startInfo.ArgumentList.Add("60");
+                startInfo.ArgumentList.Add("--silent");
+                startInfo.ArgumentList.Add("--show-error");
+                startInfo.ArgumentList.Add(url);
+
+                using var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    return null;
+                }
+
+                var outputTask = process.StandardOutput.ReadToEndAsync();
+                var errorTask = process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                var output = await outputTask;
+                var error = await errorTask;
+
+                if (process.ExitCode == 0 && !string.IsNullOrEmpty(output))
+                {
+                    return output;
+                }
+
+                if (!string.IsNullOrEmpty(error))
+                {
+                    Utils.SaveLog($"curl subscription fallback failed: {error.Trim()}");
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return "<invalid-url>";
-            }
-        }
-
-        private static string GetContentPreviewForLog(string content)
-        {
-            if (string.IsNullOrEmpty(content))
-            {
-                return string.Empty;
+                Utils.SaveLog("DownloadStringWithCurlAsync", ex);
             }
 
-            var preview = content.Replace("\r", "\\r").Replace("\n", "\\n");
-            if (preview.Length > 200)
-            {
-                preview = preview.Substring(0, 200);
-            }
-
-            return RedactSensitiveValues(preview);
-        }
-
-        private static string RedactSensitiveValues(string value)
-        {
-            return Regex.Replace(
-                value,
-                @"(?i)(token2?|access_token|sub|key|password|pwd|uuid|id)=([^&\s""'<]+)",
-                "$1=***");
+            return null;
         }
 
         public async Task<string?> UrlRedirectAsync(string url, bool blProxy)
