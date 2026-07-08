@@ -13,7 +13,7 @@ namespace ClashN.Handler
     /// </summary>
     internal class DownloadHandle
     {
-        private const string DefaultClashVergeUserAgent = "clash-verge/v2.5.2";
+        private const string DefaultClashVergeUserAgent = "clash-verge/v2.5.1";
         private const string ClashVergeLatestReleaseApi = "https://api.github.com/repos/clash-verge-rev/clash-verge-rev/releases/latest";
         private static readonly SemaphoreSlim UserAgentLock = new SemaphoreSlim(1, 1);
         private static string? latestClashVergeUserAgent;
