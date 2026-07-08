@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
+using System.Text.RegularExpressions;
 
 namespace ClashN.Handler
 {
@@ -82,7 +83,7 @@ namespace ClashN.Handler
             {
                 Utils.SetSecurityProtocol(LazyConfig.Instance.Config.EnableSecurityProtocolTls13);
                 var webProxy = GetWebProxy(blProxy);
-                var client = new HttpClient(new SocketsHttpHandler()
+                using var client = new HttpClient(new SocketsHttpHandler()
                 {
                     Proxy = webProxy,
                     UseProxy = webProxy != null
@@ -104,8 +105,22 @@ namespace ClashN.Handler
                 var cts = new CancellationTokenSource();
                 cts.CancelAfter(1000 * 30);
 
-                var result = await HttpClientHelper.GetInstance().GetAsync(client, url, cts.Token);
-                return result;
+                var logUrl = SanitizeUrlForLog(url);
+                Utils.SaveLog($"DownloadString Request url={logUrl}; proxy={blProxy}; proxyAvailable={webProxy != null}; userAgent=\"{userAgent}\"");
+
+                var response = await client.GetAsync(url, cts.Token);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                Utils.SaveLog(
+                    $"DownloadString Response url={logUrl}; status={(int)response.StatusCode} {response.StatusCode}; " +
+                    $"contentType=\"{response.Content.Headers.ContentType}\"; length={responseContent?.Length ?? 0}; " +
+                    $"preview=\"{GetContentPreviewForLog(responseContent)}\"");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception(string.Format("The request returned with HTTP status code {0}", response.StatusCode));
+                }
+
+                return (responseContent, response.Headers);
             }
             catch (Exception ex)
             {
@@ -118,6 +133,43 @@ namespace ClashN.Handler
             }
 
             return null;
+        }
+
+        private static string SanitizeUrlForLog(string url)
+        {
+            try
+            {
+                var uri = new Uri(url);
+                return uri.GetLeftPart(UriPartial.Path);
+            }
+            catch
+            {
+                return "<invalid-url>";
+            }
+        }
+
+        private static string GetContentPreviewForLog(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+            {
+                return string.Empty;
+            }
+
+            var preview = content.Replace("\r", "\\r").Replace("\n", "\\n");
+            if (preview.Length > 200)
+            {
+                preview = preview.Substring(0, 200);
+            }
+
+            return RedactSensitiveValues(preview);
+        }
+
+        private static string RedactSensitiveValues(string value)
+        {
+            return Regex.Replace(
+                value,
+                @"(?i)(token2?|access_token|sub|key|password|pwd|uuid|id)=([^&\s""'<]+)",
+                "$1=***");
         }
 
         public async Task<string?> UrlRedirectAsync(string url, bool blProxy)
