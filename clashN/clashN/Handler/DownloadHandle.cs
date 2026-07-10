@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
+using System.Text;
 
 namespace ClashN.Handler
 {
@@ -132,6 +133,8 @@ namespace ClashN.Handler
 
         private async Task<string?> DownloadStringWithCurlAsync(string url, string userAgent)
         {
+            var outputFile = Utils.GetTempPath($"curl_subscription_{Guid.NewGuid():N}.tmp");
+
             try
             {
                 var startInfo = new ProcessStartInfo
@@ -139,7 +142,6 @@ namespace ClashN.Handler
                     FileName = "curl.exe",
                     UseShellExecute = false,
                     CreateNoWindow = true,
-                    RedirectStandardOutput = true,
                     RedirectStandardError = true
                 };
 
@@ -162,6 +164,8 @@ namespace ClashN.Handler
                 startInfo.ArgumentList.Add("60");
                 startInfo.ArgumentList.Add("--silent");
                 startInfo.ArgumentList.Add("--show-error");
+                startInfo.ArgumentList.Add("--output");
+                startInfo.ArgumentList.Add(outputFile);
                 startInfo.ArgumentList.Add(url);
 
                 using var process = Process.Start(startInfo);
@@ -170,16 +174,18 @@ namespace ClashN.Handler
                     return null;
                 }
 
-                var outputTask = process.StandardOutput.ReadToEndAsync();
                 var errorTask = process.StandardError.ReadToEndAsync();
                 await process.WaitForExitAsync();
 
-                var output = await outputTask;
                 var error = await errorTask;
 
-                if (process.ExitCode == 0 && !string.IsNullOrEmpty(output))
+                if (process.ExitCode == 0 && File.Exists(outputFile))
                 {
-                    return output;
+                    var output = await File.ReadAllTextAsync(outputFile, Encoding.UTF8);
+                    if (!string.IsNullOrEmpty(output))
+                    {
+                        return output;
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(error))
@@ -190,6 +196,16 @@ namespace ClashN.Handler
             catch (Exception ex)
             {
                 Utils.SaveLog("DownloadStringWithCurlAsync", ex);
+            }
+            finally
+            {
+                try
+                {
+                    File.Delete(outputFile);
+                }
+                catch
+                {
+                }
             }
 
             return null;
