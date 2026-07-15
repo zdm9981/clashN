@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace ClashN.Tool
@@ -51,6 +52,21 @@ namespace ClashN.Tool
                 }
             }
 
+            if (TryGetFlagPrefix(name, out var flagCode, out _))
+            {
+                return flagCode;
+            }
+
+            var escapedFlagMatch = EscapedFlagPrefixRegex().Match(name);
+            if (escapedFlagMatch.Success
+                && TryConvertRegionalIndicators(
+                    escapedFlagMatch.Groups["first"].Value,
+                    escapedFlagMatch.Groups["second"].Value,
+                    out flagCode))
+            {
+                return flagCode;
+            }
+
             var match = MatchCountryCodePrefix(name);
             if (!match.Success)
             {
@@ -66,6 +82,17 @@ namespace ClashN.Tool
             if (string.IsNullOrWhiteSpace(name))
             {
                 return string.Empty;
+            }
+
+            if (TryGetFlagPrefix(name, out _, out var prefixLength))
+            {
+                return TrimDisplayName(name[prefixLength..]);
+            }
+
+            var escapedFlagMatch = EscapedFlagPrefixRegex().Match(name);
+            if (escapedFlagMatch.Success)
+            {
+                return TrimDisplayName(escapedFlagMatch.Groups["name"].Value);
             }
 
             var match = MatchCountryCodePrefix(name);
@@ -86,6 +113,72 @@ namespace ClashN.Tool
         {
             var exactMatch = ExactCountryCodeRegex().Match(name);
             return exactMatch.Success ? exactMatch : CountryCodePrefixRegex().Match(name);
+        }
+
+        private static bool TryGetFlagPrefix(string name, out string countryCode, out int prefixLength)
+        {
+            countryCode = string.Empty;
+            prefixLength = 0;
+
+            var index = 0;
+            while (index < name.Length && char.IsWhiteSpace(name, index))
+            {
+                index++;
+            }
+
+            if (!Rune.TryGetRuneAt(name, index, out var first))
+            {
+                return false;
+            }
+            index += first.Utf16SequenceLength;
+
+            if (!Rune.TryGetRuneAt(name, index, out var second))
+            {
+                return false;
+            }
+            index += second.Utf16SequenceLength;
+
+            if (!TryConvertRegionalIndicators(first.Value, second.Value, out countryCode))
+            {
+                return false;
+            }
+
+            prefixLength = index;
+            return true;
+        }
+
+        private static bool TryConvertRegionalIndicators(string first, string second, out string countryCode)
+        {
+            countryCode = string.Empty;
+            if (!int.TryParse(first, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var firstValue)
+                || !int.TryParse(second, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var secondValue))
+            {
+                return false;
+            }
+
+            return TryConvertRegionalIndicators(firstValue, secondValue, out countryCode);
+        }
+
+        private static bool TryConvertRegionalIndicators(int first, int second, out string countryCode)
+        {
+            countryCode = string.Empty;
+            const int regionalIndicatorA = 0x1F1E6;
+            const int regionalIndicatorZ = 0x1F1FF;
+            if (first < regionalIndicatorA || first > regionalIndicatorZ
+                || second < regionalIndicatorA || second > regionalIndicatorZ)
+            {
+                return false;
+            }
+
+            countryCode = string.Concat(
+                (char)('A' + first - regionalIndicatorA),
+                (char)('A' + second - regionalIndicatorA));
+            return true;
+        }
+
+        private static string TrimDisplayName(string name)
+        {
+            return name.TrimStart(' ', '\t', '-', '_', '|', ':', '\u00b7');
         }
 
         private static string NormalizeCountryCode(string countryCode)
@@ -117,5 +210,8 @@ namespace ClashN.Tool
 
         [GeneratedRegex(@"^\s*(?:\[|\()?(?<code>[A-Za-z]{2})(?:\]|\))?(?:(?:\s*[-_|:\u00b7]\s*)|\s+)(?<name>.+)$")]
         private static partial Regex CountryCodePrefixRegex();
+
+        [GeneratedRegex(@"^\s*\\U(?<first>[0-9A-Fa-f]{8})\\U(?<second>[0-9A-Fa-f]{8})(?<name>.*)$")]
+        private static partial Regex EscapedFlagPrefixRegex();
     }
 }
