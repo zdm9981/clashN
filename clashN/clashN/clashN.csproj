@@ -43,6 +43,10 @@
         <Resource Include="ClashN.ico">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Resource> 
+        <Resource Include="Resources\Flags\*.png" />
+        <Content Include="ThirdPartyNotices\Twemoji-LICENSE-GRAPHICS.txt">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
         <Compile Update="Resx\ResUI.Designer.cs">
           <DesignTime>True</DesignTime>
           <AutoGen>True</AutoGen>

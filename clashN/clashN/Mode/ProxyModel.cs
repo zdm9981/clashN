@@ -22,5 +22,13 @@ namespace ClashN.Mode
 
         [Reactive]
         public bool isActive { get; set; }
+
+        public string countryCode => Tool.CountryFlagHelper.GetCountryCode(name);
+
+        public string displayName => Tool.CountryFlagHelper.GetDisplayName(name);
+
+        public string nowCountryCode => Tool.CountryFlagHelper.GetCountryCode(now);
+
+        public string nowDisplayName => Tool.CountryFlagHelper.GetDisplayName(now);
     }
 }

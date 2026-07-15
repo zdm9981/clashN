@@ -17,7 +17,19 @@
     mc:Ignorable="d">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+        <converters:CountryFlagConverter x:Key="CountryFlagConverter" />
         <converters:DelayColorConverter x:Key="DelayColorConverter" />
+        <Style x:Key="CountryFlagImageStyle" TargetType="Image">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="15" />
+            <Setter Property="Margin" Value="0,0,5,0" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Style.Triggers>
+                <Trigger Property="Source" Value="{x:Null}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <DockPanel Margin="8">
@@ -129,16 +141,28 @@
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <StackPanel Grid.Row="0" Orientation="Horizontal">
-                                        <TextBlock Style="{StaticResource ListItemTitle}" Text="{Binding name}" />
+                                        <Image
+                                            Source="{Binding countryCode, Converter={StaticResource CountryFlagConverter}}"
+                                            Style="{StaticResource CountryFlagImageStyle}" />
+                                        <TextBlock Style="{StaticResource ListItemTitle}" Text="{Binding displayName}" />
                                         <TextBlock
                                             Margin="8,0,0,0"
                                             Style="{StaticResource ListItemSubTitle}"
                                             Text="{Binding type}" />
                                     </StackPanel>
-                                    <TextBlock
-                                        Grid.Row="1"
-                                        Style="{StaticResource ListItemSubTitle}"
-                                        Text="{Binding now}" />
+                                    <Grid Grid.Row="1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Image
+                                            Source="{Binding nowCountryCode, Converter={StaticResource CountryFlagConverter}}"
+                                            Style="{StaticResource CountryFlagImageStyle}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Style="{StaticResource ListItemSubTitle}"
+                                            Text="{Binding nowDisplayName}" />
+                                    </Grid>
                                 </Grid>
                             </DockPanel>
                         </Border>
@@ -181,11 +205,22 @@
                                         <RowDefinition Height="2*" />
                                         <RowDefinition Height="1*" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock
-                                        Grid.Row="0"
-                                        Style="{StaticResource ListItemSubTitle}"
-                                        Text="{Binding name}"
-                                        TextWrapping="WrapWithOverflow" />
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Image
+                                            Margin="0,1,5,0"
+                                            VerticalAlignment="Top"
+                                            Source="{Binding countryCode, Converter={StaticResource CountryFlagConverter}}"
+                                            Style="{StaticResource CountryFlagImageStyle}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Style="{StaticResource ListItemSubTitle}"
+                                            Text="{Binding displayName}"
+                                            TextWrapping="WrapWithOverflow" />
+                                    </Grid>
                                     <DockPanel Grid.Row="1">
                                         <TextBlock
                                             DockPanel.Dock="Right"
